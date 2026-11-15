@@ -90,3 +90,26 @@ public sealed class Sparkline : Control
         dc.DrawGeometry(null, new Pen(new SolidColorBrush(c), 1.6, lineJoin: PenLineJoin.Round), line);
     }
 }
+
+/// <summary>Thin rounded utilisation bar in a single colour.</summary>
+public sealed class ValueBar : Control
+{
+    public static readonly StyledProperty<double> ValueProperty = AvaloniaProperty.Register<ValueBar, double>(nameof(Value));
+    public static readonly StyledProperty<Color> BarColorProperty = AvaloniaProperty.Register<ValueBar, Color>(nameof(BarColor), Colors.DodgerBlue);
+    public static readonly StyledProperty<Color> TrackColorProperty = AvaloniaProperty.Register<ValueBar, Color>(nameof(TrackColor), Color.Parse("#3A3A3C"));
+    public double Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
+    public Color BarColor { get => GetValue(BarColorProperty); set => SetValue(BarColorProperty, value); }
+    public Color TrackColor { get => GetValue(TrackColorProperty); set => SetValue(TrackColorProperty, value); }
+    static ValueBar()
+    {
+        AffectsRender<ValueBar>(ValueProperty, BarColorProperty, TrackColorProperty);
+        HeightProperty.OverrideDefaultValue<ValueBar>(6);
+    }
+    public override void Render(DrawingContext dc)
+    {
+        var b = new Rect(Bounds.Size); double rad = b.Height / 2;
+        dc.DrawRectangle(new SolidColorBrush(TrackColor), null, b, rad, rad);
+        double f = Math.Clamp(Value / 100, 0, 1);
+        if (f > 0) dc.DrawRectangle(new SolidColorBrush(BarColor), null, new Rect(0, 0, Math.Max(b.Height, b.Width * f), b.Height), rad, rad);
+    }
+}

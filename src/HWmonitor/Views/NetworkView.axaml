@@ -10,10 +10,9 @@
       <Border Classes="card" Padding="28">
         <Grid ColumnDefinitions="Auto,*">
           <StackPanel Spacing="16">
-            <c:Gauge Width="280" Height="280" Value="{Binding Live}" Maximum="{Binding Max}" Text="{Binding LiveText}"
-                     Label="Mbit/s" GaugeColor="{DynamicResource NetColor}" />
+            <c:Gauge Width="320" Height="170" Value="{Binding Live}" Maximum="{Binding Max}" Text="{Binding LiveText}" Unit="Mbit/s"
+                     Label="{Binding Phase}" GaugeColor="{DynamicResource NetColor}" />
             <Button Classes="primary" HorizontalAlignment="Center" Content="{Binding ButtonText}" Command="{Binding StartCommand}" />
-            <TextBlock Classes="sub" HorizontalAlignment="Center" Text="{Binding Phase}" />
           </StackPanel>
           <UniformGrid Grid.Column="1" Columns="2" Margin="32,0,0,0" VerticalAlignment="Center">
             <Border Classes="tile" Margin="0,0,10,10" Padding="18">

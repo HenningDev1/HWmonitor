@@ -112,12 +112,12 @@ public sealed partial class HardwareService : IDisposable
                 case HardwareType.Storage: disks.Add(ReadDisk(hw)); break;
             }
         }
-        // discrete GPUs first
-        gpus.Sort((a, b) => IsIntegrated(a.Name).CompareTo(IsIntegrated(b.Name)));
+        // integrated graphics (CPU iGPU) are not tracked when a dedicated GPU exists
+        if (gpus.Any(g => !IsIntegrated(g.Name))) gpus.RemoveAll(g => IsIntegrated(g.Name));
         return new HardwareSnapshot(cpu, gpus, ram, disks);
     }
 
-    static bool IsIntegrated(string n) => n.Contains("Intel", StringComparison.OrdinalIgnoreCase) && !n.Contains("Arc", StringComparison.OrdinalIgnoreCase)
+    public static bool IsIntegrated(string n) => n.Contains("Intel", StringComparison.OrdinalIgnoreCase) && !n.Contains("Arc", StringComparison.OrdinalIgnoreCase)
         || n.Contains("Radeon(TM) Graphics", StringComparison.OrdinalIgnoreCase) || n.EndsWith("Radeon Graphics", StringComparison.OrdinalIgnoreCase);
 
     static ISensor? Find(IHardware hw, SensorType t, params string[] names)
@@ -133,6 +133,19 @@ public sealed partial class HardwareService : IDisposable
     static bool Valid(ISensor s) => s.Value.HasValue && !float.IsNaN(s.Value!.Value)
         && (s.SensorType is SensorType.Load or SensorType.Data or SensorType.SmallData or SensorType.Fan or SensorType.Throughput || s.Value!.Value > 0);
 
+    readonly CpuClockFallback _clockFallback = new();
+
+    /// <summary>True when the PawnIO driver (needed for CPU temperature/power) is installed.</summary>
+    public static bool PawnIoInstalled()
+    {
+        try
+        {
+            using var k = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\PawnIO");
+            return k != null;
+        }
+        catch { return false; }
+    }
+
     public static int PhysicalCores { get; } = QueryCores();
     static int QueryCores()
     {
@@ -147,7 +160,7 @@ public sealed partial class HardwareService : IDisposable
     [GeneratedRegex(@"^CPU Core #(\d+)(?: Thread #\d+)?$")] private static partial Regex CoreLoadRx();
     [GeneratedRegex(@"^(?:CPU )?(?:P-|E-)?Core #(\d+)$")] private static partial Regex CoreRx();
 
-    static CpuSample ReadCpu(IHardware hw)
+    CpuSample ReadCpu(IHardware hw)
     {
         var load = Find(hw, SensorType.Load, "CPU Total")?.Value ?? 0;
         var temp = (Find(hw, SensorType.Temperature, "Core (Tctl/Tdie)", "CPU Package", "Core Max", "Core Average", "Tctl") ?? First(hw, SensorType.Temperature))?.Value;
@@ -185,10 +198,24 @@ public sealed partial class HardwareService : IDisposable
             }
             loads = folded;
         }
+        // No driver → no MSR clocks. Derive effective clocks from Windows' "% Processor Performance" counters.
+        float? fallbackAvg = null;
+        if (clocks.Count == 0 && _clockFallback.Sample() is { } fb)
+        {
+            fallbackAvg = fb.Avg;
+            int per = Math.Max(1, fb.PerLogical.Length / Math.Max(1, loads.Count));
+            int idx = 0;
+            foreach (var k in loads.Keys)
+            {
+                var slice = fb.PerLogical.Skip(idx * per).Take(per).ToArray();
+                if (slice.Length > 0) clocks[k] = slice.Max();
+                idx++;
+            }
+        }
         var cores = loads.Select(kv => new CoreSample(kv.Key, kv.Value.Average(),
             clocks.TryGetValue(kv.Key, out var ck) ? ck : null,
             temps.TryGetValue(kv.Key, out var tp) ? tp : null)).ToList();
-        float? clock = Find(hw, SensorType.Clock, "Cores (Average)")?.Value ?? (clocks.Count > 0 ? clocks.Values.Where(v => v > 0).DefaultIfEmpty(0).Average() : null);
+        float? clock = Find(hw, SensorType.Clock, "Cores (Average)")?.Value ?? fallbackAvg ?? (clocks.Count > 0 ? clocks.Values.Where(v => v > 0).DefaultIfEmpty(0).Average() : null);
         return new CpuSample(hw.Name, load, temp, clock is > 0 ? clock : null, power,
             PhysicalCores > 0 ? PhysicalCores : Math.Max(1, cores.Count), Environment.ProcessorCount, cores);
     }
@@ -228,5 +255,39 @@ public sealed partial class HardwareService : IDisposable
         _running = false;
         _wake.Set();
         try { _thread.Join(1500); _pc.Close(); } catch { }
+    }
+}
+
+/// <summary>Effective CPU clock = base clock × "% Processor Performance" (works without any driver).</summary>
+sealed class CpuClockFallback
+{
+    System.Diagnostics.PerformanceCounter? _total;
+    System.Diagnostics.PerformanceCounter[] _logical = [];
+    float _baseMhz;
+    bool _init, _failed;
+
+    public (float Avg, float[] PerLogical)? Sample()
+    {
+        if (_failed) return null;
+        try
+        {
+            if (!_init)
+            {
+                _init = true;
+                using (var s = new ManagementObjectSearcher("SELECT MaxClockSpeed FROM Win32_Processor"))
+                    _baseMhz = s.Get().Cast<ManagementObject>().Select(m => Convert.ToSingle(m["MaxClockSpeed"])).FirstOrDefault();
+                const string cat = "Processor Information", ctr = "% Processor Performance";
+                _total = new(cat, ctr, "_Total", true);
+                var names = new System.Diagnostics.PerformanceCounterCategory(cat).GetInstanceNames()
+                    .Where(n => !n.Contains("_Total") && n.Contains(','))
+                    .OrderBy(n => int.Parse(n.Split(',')[0])).ThenBy(n => int.Parse(n.Split(',')[1])).ToArray();
+                _logical = names.Select(n => new System.Diagnostics.PerformanceCounter(cat, ctr, n, true)).ToArray();
+                _total.NextValue(); foreach (var c in _logical) c.NextValue();
+                return null; // first sample is always 0
+            }
+            if (_baseMhz <= 0 || _total == null) return null;
+            return (_total.NextValue() / 100f * _baseMhz, _logical.Select(c => c.NextValue() / 100f * _baseMhz).ToArray());
+        }
+        catch { _failed = true; return null; }
     }
 }

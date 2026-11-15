@@ -13,7 +13,7 @@
       <!-- live -->
       <Border Classes="card" Padding="24">
         <Grid ColumnDefinitions="Auto,*">
-          <c:Gauge Width="220" Height="220" Value="{Binding Fps}" Maximum="{Binding FpsMax}" Text="{Binding FpsText}" Label="FPS"
+          <c:Gauge Width="280" Height="150" Value="{Binding Fps}" Maximum="{Binding FpsMax}" Text="{Binding FpsText}" Unit="FPS" Label="Live frame rate"
                    GaugeColor="{DynamicResource FpsColor}" />
           <StackPanel Grid.Column="1" Margin="28,4,0,0" Spacing="14">
             <StackPanel Spacing="2">

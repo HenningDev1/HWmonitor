@@ -9,7 +9,8 @@ public sealed class CoreVM : ObservableObject
     double _load, _temp; string _clock = "—", _title = "", _tempText = "";
     bool _hasTemp;
     public string Title { get => _title; set => Set(ref _title, value); }
-    public double Load { get => _load; set => Set(ref _load, value); }
+    public double Load { get => _load; set { if (Set(ref _load, value)) Raise(nameof(LoadText)); } }
+    public string LoadText => $"{_load:0}%";
     public string Clock { get => _clock; set => Set(ref _clock, value); }
     public double Temp { get => _temp; set => Set(ref _temp, value); }
     public string TempText { get => _tempText; set => Set(ref _tempText, value); }
@@ -56,8 +57,24 @@ public sealed class GpuVM : ObservableObject
 
 public sealed class RamVM : ObservableObject
 {
-    string _model = "", _used = "—"; double _load;
-    public string Model { get => _model; set => Set(ref _model, value); }
+    string _model = "", _used = "—", _avail = "—"; double _load;
+    public string Model
+    {
+        get => _model;
+        set { if (Set(ref _model, value)) { Raise(nameof(Summary)); Raise(nameof(Brand)); Raise(nameof(Speed)); Raise(nameof(Modules)); } }
+    }
+    string Part(int i) { var p = _model.Split(" · "); return i < p.Length ? p[i] : "—"; }
+    // Model looks like "2× 16 GB DDR5 · PATRIOT 6000 Series · 6000 MT/s"
+    public string Modules => Part(0).Split(' ') is { Length: >= 3 } a ? $"{a[0]} {a[1]} {a[2]}" : "—";
+    public string Summary { get; private set; } = "";
+    public string Brand => Part(1);
+    public string Speed => Part(2);
+    public string Available { get => _avail; set => Set(ref _avail, value); }
+    public void SetTotal(float totalGb, string type)
+    {
+        var s = $"{Math.Round(totalGb)} GB {type}".Trim();
+        if (s != Summary) { Summary = s; Raise(nameof(Summary)); }
+    }
     public double Load { get => _load; set => Set(ref _load, value); }
     public string Used { get => _used; set => Set(ref _used, value); }
 }
@@ -87,6 +104,23 @@ public sealed class HardwareViewModel : ObservableObject
     bool _loading = true;
     public bool Loading { get => _loading; set => Set(ref _loading, value); }
 
+    // ── PawnIO (CPU temperature / power driver) ──
+    bool _needsDriver = !HardwareService.PawnIoInstalled();
+    bool _installing; string _driverStatus = "";
+    public bool NeedsCpuDriver { get => _needsDriver; set => Set(ref _needsDriver, value); }
+    public bool InstallingDriver { get => _installing; set => Set(ref _installing, value); }
+    public string CpuDriverStatus { get => _driverStatus; set => Set(ref _driverStatus, value); }
+    public RelayCommand InstallCpuDriver => new(async () =>
+    {
+        if (InstallingDriver) return;
+        InstallingDriver = true;
+        CpuDriverStatus = "Installing PawnIO driver…";
+        bool ok = await PawnIoService.InstallAsync();
+        InstallingDriver = false;
+        if (ok) { CpuDriverStatus = "Installed, restarting HWmonitor…"; await Task.Delay(800); PawnIoService.RestartApp(); }
+        else CpuDriverStatus = "Install failed. Download it from pawnio.eu, then restart HWmonitor.";
+    });
+
     public HardwareViewModel(HardwareService hw)
     {
         _hw = hw;
@@ -103,6 +137,7 @@ public sealed class HardwareViewModel : ObservableObject
             Cpu.Name = c.Name;
             Cpu.Load = c.Load;
             Cpu.HasTemp = c.Temp.HasValue;
+            if (c.Temp.HasValue) NeedsCpuDriver = false;
             Cpu.Temp = c.Temp ?? 0;
             Cpu.TempText = Fmt.Temp(c.Temp);
             Cpu.Clock = Fmt.Mhz(c.ClockMhz);
@@ -158,6 +193,11 @@ public sealed class HardwareViewModel : ObservableObject
             Ram.Load = r.Load;
             Ram.Used = $"{r.UsedGb:0.0} / {r.TotalGb:0.0} GB";
             Ram.Model = _hw.RamDescription;
+            Ram.Available = $"{r.TotalGb - r.UsedGb:0.0} GB";
+            var type = _hw.RamDescription.Split(" · ")[0].Split(' ').LastOrDefault() ?? "";
+            var m = System.Text.RegularExpressions.Regex.Match(_hw.RamDescription, @"^(\d+)× (\d+) GB");
+            float total = m.Success ? int.Parse(m.Groups[1].Value) * int.Parse(m.Groups[2].Value) : r.TotalGb;
+            Ram.SetTotal(total, type.StartsWith("DDR") || type.StartsWith("LPDDR") ? type : "");
         }
 
         while (Disks.Count < s.Disks.Count) Disks.Add(new DiskVM());

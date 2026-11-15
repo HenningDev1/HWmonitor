@@ -47,6 +47,7 @@ public static class DriverService
             }
         }
         catch { }
+        if (list.Any(d => !HardwareService.IsIntegrated(d.Gpu))) list.RemoveAll(d => HardwareService.IsIntegrated(d.Gpu));
         return list;
     }
 
@@ -73,5 +74,33 @@ public static class StartupService
             p?.WaitForExit(5000);
         }
         catch { }
+    }
+}
+
+public static class PawnIoService
+{
+    /// <summary>Installs the PawnIO driver through winget (official package namazso.PawnIO).</summary>
+    public static async Task<bool> InstallAsync()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo("winget", "install -e --id namazso.PawnIO --silent --accept-package-agreements --accept-source-agreements")
+            { UseShellExecute = false, CreateNoWindow = true };
+            using var p = Process.Start(psi);
+            if (p == null) return false;
+            await p.WaitForExitAsync();
+            return HardwareService.PawnIoInstalled();
+        }
+        catch
+        {
+            DriverService.Open("https://pawnio.eu");
+            return false;
+        }
+    }
+
+    public static void RestartApp()
+    {
+        try { Process.Start(new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = true }); } catch { }
+        Environment.Exit(0);
     }
 }

@@ -98,7 +98,7 @@ static class Installer
             try { p.Kill(); p.WaitForExit(5000); } catch { }
     }
 
-    public static void Install(string dir, bool desktop, bool startMenu, IProgress<string> log)
+    public static void Install(string dir, bool desktop, bool startMenu, IProgress<string> log, bool pawnIo = false)
     {
         log?.Report("Closing running instances…");
         KillRunning();
@@ -135,7 +135,29 @@ static class Installer
             k.SetValue("NoModify", 1, RegistryValueKind.DWord);
             k.SetValue("NoRepair", 1, RegistryValueKind.DWord);
         }
+        if (pawnIo) InstallPawnIo(log);
         log?.Report("Done");
+    }
+
+    static bool PawnIoInstalled()
+    {
+        using var k = Hklm.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\PawnIO");
+        return k != null;
+    }
+
+    /// <summary>PawnIO lets the sensor library read CPU temperature and power (official winget package).</summary>
+    static void InstallPawnIo(IProgress<string> log)
+    {
+        if (PawnIoInstalled()) return;
+        log?.Report("Installing PawnIO sensor driver (CPU temperature)…");
+        try
+        {
+            var p = Process.Start(new ProcessStartInfo("winget", "install -e --id namazso.PawnIO --silent --accept-package-agreements --accept-source-agreements")
+            { CreateNoWindow = true, UseShellExecute = false });
+            p?.WaitForExit(180000);
+        }
+        catch { }
+        if (!PawnIoInstalled()) log?.Report("PawnIO could not be installed automatically — get it from pawnio.eu");
     }
 
     public static void Uninstall(string dir, bool removeData, IProgress<string> log = null)
@@ -202,6 +224,7 @@ sealed class SetupForm : Form
     readonly TextBox _dir = new();
     readonly CheckBox _desktop = new() { Text = "Create desktop shortcut", Checked = true, AutoSize = true };
     readonly CheckBox _startMenu = new() { Text = "Add to Start menu", Checked = true, AutoSize = true };
+    readonly CheckBox _pawnIo = new() { Text = "Install PawnIO sensor driver (needed for CPU temperature and power)", Checked = true, AutoSize = true };
     readonly CheckBox _launch = new() { Text = "Launch HWmonitor when finished", Checked = true, AutoSize = true };
     readonly CheckBox _removeData = new() { Text = "Also delete my settings, speed tests and gaming session history", AutoSize = true };
     readonly Label _status = new() { AutoSize = false, Height = 20 };
@@ -220,7 +243,7 @@ sealed class SetupForm : Form
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
-        ClientSize = new Size(560, 380);
+        ClientSize = new Size(560, 400);
         BackColor = Bg;
         using (var s = typeof(SetupForm).Assembly.GetManifestResourceStream("icon.ico")) if (s != null) Icon = new Icon(s);
 
@@ -246,8 +269,8 @@ sealed class SetupForm : Form
                 if (d.ShowDialog(this) == DialogResult.OK) _dir.Text = Path.Combine(d.SelectedPath, "HWmonitor");
             };
             Controls.AddRange(new Control[] { _dir, _browse });
-            _desktop.Location = new Point(32, y + 68); _startMenu.Location = new Point(32, y + 94); _launch.Location = new Point(32, y + 120);
-            Controls.AddRange(new Control[] { _desktop, _startMenu, _launch });
+            _desktop.Location = new Point(32, y + 68); _startMenu.Location = new Point(32, y + 94); _pawnIo.Location = new Point(32, y + 120); _launch.Location = new Point(32, y + 146);
+            Controls.AddRange(new Control[] { _desktop, _startMenu, _pawnIo, _launch });
         }
         else
         {
@@ -257,14 +280,14 @@ sealed class SetupForm : Form
             Controls.Add(_removeData);
         }
 
-        _bar.SetBounds(32, 286, 496, 4);
-        _status.SetBounds(32, 296, 496, 20); _status.ForeColor = Color.FromArgb(110, 110, 115);
+        _bar.SetBounds(32, 306, 496, 4);
+        _status.SetBounds(32, 316, 496, 20); _status.ForeColor = Color.FromArgb(110, 110, 115);
         Controls.AddRange(new Control[] { _bar, _status });
 
         Style(_primary, true); Style(_secondary, false);
         _primary.Text = uninstall ? "Uninstall" : "Install";
-        _primary.SetBounds(408, 326, 120, 34);
-        _secondary.SetBounds(276, 326, 120, 34);
+        _primary.SetBounds(408, 346, 120, 34);
+        _secondary.SetBounds(276, 346, 120, 34);
         _secondary.Text = "Cancel";
         _secondary.Click += (_, _) => Close();
         _primary.Click += async (_, _) => await Run();
@@ -276,7 +299,7 @@ sealed class SetupForm : Form
             _primary.Text = "Reinstall";
             var un = new Button { Text = "Uninstall" };
             Style(un, false);
-            un.SetBounds(32, 326, 120, 34);
+            un.SetBounds(32, 346, 120, 34);
             un.Click += (_, _) =>
             {
                 string u = Path.Combine(existing, "Uninstall.exe");
@@ -318,8 +341,8 @@ sealed class SetupForm : Form
             else
             {
                 string dir = _dir.Text.Trim();
-                bool desk = _desktop.Checked, start = _startMenu.Checked;
-                await Task.Run(() => Installer.Install(dir, desk, start, progress));
+                bool desk = _desktop.Checked, start = _startMenu.Checked, pawn = _pawnIo.Checked;
+                await Task.Run(() => Installer.Install(dir, desk, start, progress, pawn));
                 _bar.Visible = false;
                 if (_launch.Checked) Process.Start(new ProcessStartInfo(Path.Combine(dir, "HWmonitor.exe")) { UseShellExecute = true, WorkingDirectory = dir });
                 else MessageBox.Show(this, "HWmonitor was installed successfully.", "Setup complete", MessageBoxButtons.OK, MessageBoxIcon.Information);

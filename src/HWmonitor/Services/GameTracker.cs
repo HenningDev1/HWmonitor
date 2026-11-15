@@ -136,7 +136,7 @@ public sealed partial class GameTracker : IDisposable
 
     void OnFrame(int pid, double ft)
     {
-        if (Active == null || _proc == null || pid != _proc.Id) return;
+        if (Active == null || pid != _pid) return;
         lock (_lock) _stats?.Add(ft);
     }
 
@@ -150,12 +150,12 @@ public sealed partial class GameTracker : IDisposable
 
             if (Active != null && _proc != null)
             {
-                if (_proc.HasExited) { EndSession(); }
+                if (!IsAlive()) EndSession();
                 else SampleHardware();
             }
 
             if (!_settings.TrackGames || fgPid == 0) return;
-            if (Active != null && _proc?.Id == (int)fgPid) return;
+            if (Active != null && _pid == (int)fgPid) return;
 
             using var p = Process.GetProcessById((int)fgPid);
             ForegroundName = p.ProcessName;
@@ -193,6 +193,7 @@ public sealed partial class GameTracker : IDisposable
         lock (_lock)
         {
             _proc = p;
+            _pid = p.Id; _procName = p.ProcessName;
             _stats = new FrameStats();
             _cpuLoadSum = _gpuLoadSum = 0; _loadSamples = 0;
             Active = new GameSession { Game = name, Exe = p.ProcessName, Start = DateTime.Now };
@@ -242,6 +243,22 @@ public sealed partial class GameTracker : IDisposable
     }
 
     public int? ActivePid => _proc?.Id;
+    int _pid; string _procName = "";
+
+    /// <summary>
+    /// Robust "is the game still running" check. Process.HasExited throws for protected /
+    /// anti-cheat processes, which previously kept sessions open forever.
+    /// </summary>
+    bool IsAlive()
+    {
+        try { if (_proc != null) return !_proc.HasExited; } catch { }
+        try
+        {
+            using var p = Process.GetProcessById(_pid);
+            return p.ProcessName.Equals(_procName, StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; } // ArgumentException → process is gone
+    }
 
     static bool IsFullscreen(IntPtr hwnd)
     {

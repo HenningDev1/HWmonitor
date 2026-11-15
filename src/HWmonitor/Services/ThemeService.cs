@@ -25,11 +25,13 @@ public static class ThemeService
         Color C(string hex) => Color.Parse(hex);
         Color WithA(Color c, byte alpha) => Color.FromArgb(alpha, c.R, c.G, c.B);
 
-        var window = dark ? C("#1C1C1E") : C("#F5F5F7");
+        var window = dark ? C("#111113") : C("#F5F5F7");
         r["WindowBrush"] = new SolidColorBrush(WithA(window, a));
         r["SidebarBrush"] = new SolidColorBrush(dark ? C("#14FFFFFF") : C("#0A000000"));
         r["CardBrush"] = new SolidColorBrush(dark ? C("#2C2C2E") : C("#FFFFFF"));
-        r["CardAltBrush"] = new SolidColorBrush(dark ? C("#3A3A3C") : C("#F2F2F7"));
+        r["CardTopColor"] = dark ? C("#232326") : C("#FFFFFF");
+        r["CardBottomColor"] = dark ? C("#1A1A1C") : C("#FAFAFC");
+        r["CardAltBrush"] = new SolidColorBrush(dark ? C("#2A2A2E") : C("#F2F2F7"));
         r["TextBrush"] = new SolidColorBrush(dark ? C("#F5F5F7") : C("#1D1D1F"));
         r["SubTextBrush"] = new SolidColorBrush(dark ? C("#98989D") : C("#6E6E73"));
         r["HairlineBrush"] = new SolidColorBrush(dark ? C("#33FFFFFF") : C("#1F000000"));
