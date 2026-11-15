@@ -1,0 +1,101 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HWmonitor.ViewModels"
+             xmlns:c="using:HWmonitor.Controls"
+             x:Class="HWmonitor.Views.GamingView"
+             x:DataType="vm:GamingViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28,4,28,28" Spacing="16">
+      <Border Classes="pill" Background="#33FF9F0A" HorizontalAlignment="Left" IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Text="{Binding Status}" Foreground="#FF9F0A" FontSize="12" />
+      </Border>
+
+      <!-- live -->
+      <Border Classes="card" Padding="24">
+        <Grid ColumnDefinitions="Auto,*">
+          <c:Gauge Width="220" Height="220" Value="{Binding Fps}" Maximum="{Binding FpsMax}" Text="{Binding FpsText}" Label="FPS"
+                   GaugeColor="{DynamicResource FpsColor}" />
+          <StackPanel Grid.Column="1" Margin="28,4,0,0" Spacing="14">
+            <StackPanel Spacing="2">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Ellipse Width="9" Height="9" Fill="#30D158" IsVisible="{Binding Active}" VerticalAlignment="Center" />
+                <TextBlock Classes="caps" Text="NOW PLAYING" />
+              </StackPanel>
+              <TextBlock Classes="h1" Text="{Binding Game}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Classes="sub" Text="{Binding Elapsed}" />
+            </StackPanel>
+            <WrapPanel ItemSpacing="10" LineSpacing="10">
+              <Border Classes="tile" Padding="14,10" MinWidth="120"><StackPanel><TextBlock Classes="caps" Text="FRAME TIME" /><TextBlock Classes="h2" Text="{Binding FrametimeText}" /></StackPanel></Border>
+              <Border Classes="tile" Padding="14,10" MinWidth="120"><StackPanel><TextBlock Classes="caps" Text="1% LOW (SESSION)" /><TextBlock Classes="h2" Text="{Binding LowText}" /></StackPanel></Border>
+              <Border Classes="tile" Padding="14,10" MinWidth="120"><StackPanel><TextBlock Classes="caps" Text="CPU TEMP" /><TextBlock Classes="h2" Text="{Binding CpuTemp}" /></StackPanel></Border>
+              <Border Classes="tile" Padding="14,10" MinWidth="120"><StackPanel><TextBlock Classes="caps" Text="GPU TEMP" /><TextBlock Classes="h2" Text="{Binding GpuTemp}" /></StackPanel></Border>
+            </WrapPanel>
+            <StackPanel Spacing="4">
+              <TextBlock Classes="caps" Text="FRAME TIME · LAST 90 SAMPLES" />
+              <c:Sparkline Height="64" Values="{Binding FrameTimes}" LineColor="{DynamicResource FpsColor}" />
+            </StackPanel>
+            <Button Classes="ghost" Content="End session now" IsVisible="{Binding Active}" Command="{Binding EndNow}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- totals -->
+      <Border Classes="card" IsVisible="{Binding !!Totals.Count}">
+        <StackPanel Spacing="10">
+          <TextBlock Classes="h2" Text="Most played" />
+          <ItemsControl ItemsSource="{Binding Totals}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:GameTotal">
+                <Grid ColumnDefinitions="220,*,Auto" Margin="0,5">
+                  <StackPanel>
+                    <TextBlock Classes="h3" Text="{Binding Game}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Classes="sub" FontSize="11"><Run Text="{Binding Sessions}" /><Run Text=" · " /><Run Text="{Binding LastPlayed}" /></TextBlock>
+                  </StackPanel>
+                  <ProgressBar Grid.Column="1" Value="{Binding Share}" Height="6" MinHeight="6" CornerRadius="3" Margin="12,0"
+                               VerticalAlignment="Center" Foreground="{DynamicResource AccentBrush}" />
+                  <TextBlock Grid.Column="2" Classes="h3" Text="{Binding Playtime}" VerticalAlignment="Center" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- history -->
+      <Grid ColumnDefinitions="*,Auto" Margin="4,4,0,0">
+        <TextBlock Classes="caps" Text="SESSION HISTORY" VerticalAlignment="Center" />
+        <Button Grid.Column="1" Classes="ghost" Content="Clear history" Command="{Binding ClearHistory}" IsVisible="{Binding !!Sessions.Count}" />
+      </Grid>
+      <TextBlock Classes="sub" Text="Finished sessions (30 s or longer) appear here." IsVisible="{Binding !Sessions.Count}" />
+      <ItemsControl ItemsSource="{Binding Sessions}">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="10" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:SessionVM">
+            <Border Classes="card" Padding="16">
+              <Grid ColumnDefinitions="230,*,Auto">
+                <StackPanel Spacing="2" VerticalAlignment="Center">
+                  <TextBlock Classes="h3" Text="{Binding Game}" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Classes="sub" Text="{Binding When}" />
+                  <TextBlock Classes="sub"><Run Text="Played " /><Run Text="{Binding Duration}" /></TextBlock>
+                </StackPanel>
+                <WrapPanel Grid.Column="1" ItemSpacing="22" LineSpacing="6" VerticalAlignment="Center" Margin="12,0">
+                  <StackPanel><TextBlock Classes="caps" Text="AVG FPS" /><TextBlock Classes="h3" Text="{Binding AvgFps}" /></StackPanel>
+                  <StackPanel><TextBlock Classes="caps" Text="1% LOW" /><TextBlock Classes="h3" Text="{Binding Low1}" /></StackPanel>
+                  <StackPanel><TextBlock Classes="caps" Text="0.1% LOW" /><TextBlock Classes="h3" Text="{Binding Low01}" /></StackPanel>
+                  <StackPanel><TextBlock Classes="caps" Text="FRAME TIME" /><TextBlock Classes="h3" Text="{Binding Frametime}" /></StackPanel>
+                  <StackPanel><TextBlock Classes="caps" Text="WORST FRAME" /><TextBlock Classes="h3" Text="{Binding MaxFrametime}" /></StackPanel>
+                  <StackPanel><TextBlock Classes="caps" Text="PEAK CPU" /><TextBlock Classes="h3" Text="{Binding CpuTemp}" /></StackPanel>
+                  <StackPanel><TextBlock Classes="caps" Text="PEAK GPU" /><TextBlock Classes="h3" Text="{Binding GpuTemp}" /></StackPanel>
+                  <StackPanel><TextBlock Classes="caps" Text="PEAK VRAM" /><TextBlock Classes="h3" Text="{Binding Vram}" /></StackPanel>
+                  <StackPanel><TextBlock Classes="caps" Text="AVG LOAD" /><TextBlock Classes="h3" Text="{Binding Loads}" /></StackPanel>
+                </WrapPanel>
+                <Button Grid.Column="2" Classes="ghost" Content="Delete" VerticalAlignment="Center"
+                        Command="{Binding $parent[UserControl].((vm:GamingViewModel)DataContext).DeleteSession}" CommandParameter="{Binding}" />
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

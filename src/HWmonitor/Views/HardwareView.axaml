@@ -1,0 +1,148 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HWmonitor.ViewModels"
+             xmlns:c="using:HWmonitor.Controls"
+             x:Class="HWmonitor.Views.HardwareView"
+             x:DataType="vm:HardwareViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28,4,28,28" Spacing="16">
+
+      <TextBlock Classes="sub" IsVisible="{Binding Loading}" Text="Reading sensors…" />
+
+      <!-- ───────── CPU ───────── -->
+      <Border Classes="card">
+        <StackPanel Spacing="16">
+          <Grid ColumnDefinitions="Auto,*" >
+            <c:Gauge Width="170" Height="170" Value="{Binding Cpu.Load}" Label="CPU LOAD" GaugeColor="{DynamicResource CpuColor}" />
+            <StackPanel Grid.Column="1" Margin="24,6,0,0" Spacing="12">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="caps" Text="PROCESSOR" />
+                <TextBlock Classes="h2" Text="{Binding Cpu.Name}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Classes="sub" Text="{Binding Cpu.Topology}" />
+              </StackPanel>
+              <UniformGrid Columns="3" HorizontalAlignment="Left">
+                <StackPanel Margin="0,0,32,0"><TextBlock Classes="caps" Text="CLOCK" /><TextBlock Classes="h2" Text="{Binding Cpu.Clock}" /></StackPanel>
+                <StackPanel Margin="0,0,32,0"><TextBlock Classes="caps" Text="POWER" /><TextBlock Classes="h2" Text="{Binding Cpu.Power}" /></StackPanel>
+                <StackPanel><TextBlock Classes="caps" Text="TEMPERATURE" /><TextBlock Classes="h2" Text="{Binding Cpu.TempText}" /></StackPanel>
+              </UniformGrid>
+              <c:TempBar Value="{Binding Cpu.Temp}" Height="10" MaxWidth="520" HorizontalAlignment="Stretch" IsVisible="{Binding Cpu.HasTemp}" />
+              <TextBlock Classes="sub" IsVisible="{Binding !Cpu.HasTemp}" TextWrapping="Wrap"
+                         Text="CPU temperature unavailable. Install the free PawnIO driver (pawnio.eu) so the sensor library can read CPU temperatures, then restart HWmonitor." />
+            </StackPanel>
+          </Grid>
+
+          <TextBlock Classes="caps" Text="CORES" />
+          <ItemsControl ItemsSource="{Binding Cpu.Cores}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel ItemSpacing="10" LineSpacing="10" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:CoreVM">
+                <Border Classes="tile" Width="112">
+                  <StackPanel Spacing="4">
+                    <c:Gauge Width="88" Height="88" HorizontalAlignment="Center" Value="{Binding Load}" ShowTicks="False"
+                             Label="{Binding Title}" GaugeColor="{DynamicResource CoreColor}" />
+                    <TextBlock Classes="sub" HorizontalAlignment="Center" Text="{Binding Clock}" />
+                    <StackPanel Spacing="3" IsVisible="{Binding HasTemp}">
+                      <c:TempBar Value="{Binding Temp}" Height="5" />
+                      <TextBlock Classes="sub" FontSize="10" HorizontalAlignment="Center" Text="{Binding TempText}" />
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- ───────── GPU(s) ───────── -->
+      <ItemsControl ItemsSource="{Binding Gpus}">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="16" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:GpuVM">
+            <Border Classes="card">
+              <Grid ColumnDefinitions="Auto,Auto,*">
+                <c:Gauge Width="170" Height="170" Value="{Binding Load}" Label="GPU LOAD" GaugeColor="{DynamicResource GpuColor}" />
+                <c:Gauge Grid.Column="1" Width="130" Height="130" Margin="16,0,0,0" VerticalAlignment="Center" Value="{Binding VramPct}"
+                         Label="VRAM" GaugeColor="{DynamicResource VramColor}" />
+                <StackPanel Grid.Column="2" Margin="24,6,0,0" Spacing="12">
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="caps" Text="GRAPHICS" />
+                    <TextBlock Classes="h2" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <TextBlock Classes="sub" Text="{Binding Driver}" VerticalAlignment="Center" />
+                      <Border Classes="pill" Background="#33FF9F0A" IsVisible="{Binding DriverUpdate}" ToolTip.Tip="{Binding DriverHint}">
+                        <Button Background="Transparent" Padding="0" Command="{Binding OpenDriverPage}">
+                          <TextBlock Text="Update available" Foreground="#FF9F0A" FontSize="11" FontWeight="SemiBold" />
+                        </Button>
+                      </Border>
+                      <Border Classes="pill" Background="#2230D158" IsVisible="{Binding !DriverUpdate}" ToolTip.Tip="{Binding DriverHint}">
+                        <TextBlock Text="Up to date" Foreground="#30D158" FontSize="11" FontWeight="SemiBold" />
+                      </Border>
+                    </StackPanel>
+                  </StackPanel>
+                  <WrapPanel ItemSpacing="28" LineSpacing="8">
+                    <StackPanel><TextBlock Classes="caps" Text="CORE CLOCK" /><TextBlock Classes="h2" Text="{Binding CoreClock}" /></StackPanel>
+                    <StackPanel><TextBlock Classes="caps" Text="MEMORY CLOCK" /><TextBlock Classes="h2" Text="{Binding MemClock}" /></StackPanel>
+                    <StackPanel><TextBlock Classes="caps" Text="VRAM" /><TextBlock Classes="h2" Text="{Binding VramText}" /></StackPanel>
+                    <StackPanel><TextBlock Classes="caps" Text="POWER" /><TextBlock Classes="h2" Text="{Binding Power}" /></StackPanel>
+                    <StackPanel><TextBlock Classes="caps" Text="FAN" /><TextBlock Classes="h2" Text="{Binding Fan}" /></StackPanel>
+                  </WrapPanel>
+                  <Grid ColumnDefinitions="*,Auto" MaxWidth="560" HorizontalAlignment="Stretch">
+                    <c:TempBar Value="{Binding Temp}" Height="10" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Margin="12,0,0,0" Classes="sub">
+                      <Run Text="{Binding TempText}" /><Run Text="  ·  hot spot " /><Run Text="{Binding HotSpot}" />
+                    </TextBlock>
+                  </Grid>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- ───────── RAM ───────── -->
+      <Border Classes="card">
+        <Grid ColumnDefinitions="Auto,*">
+          <c:Gauge Width="130" Height="130" Value="{Binding Ram.Load}" Label="RAM" GaugeColor="{DynamicResource RamColor}" />
+          <StackPanel Grid.Column="1" Margin="24,8,0,0" Spacing="10" VerticalAlignment="Center">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="caps" Text="MEMORY" />
+              <TextBlock Classes="h2" Text="{Binding Ram.Model}" TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel><TextBlock Classes="caps" Text="IN USE" /><TextBlock Classes="h2" Text="{Binding Ram.Used}" /></StackPanel>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ───────── Storage ───────── -->
+      <TextBlock Classes="caps" Text="STORAGE" Margin="4,4,0,0" />
+      <ItemsControl ItemsSource="{Binding Disks}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate><WrapPanel ItemSpacing="16" LineSpacing="16" /></ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:DiskVM">
+            <Border Classes="card" Width="360">
+              <StackPanel Spacing="12">
+                <StackPanel Spacing="2">
+                  <TextBlock Classes="h3" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Classes="sub" Text="{Binding Size}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                  <c:Gauge Width="110" Height="110" Value="{Binding Used}" Label="SPACE USED" GaugeColor="{DynamicResource DiskColor}" />
+                  <c:Gauge Width="110" Height="110" Value="{Binding Activity}" Label="ACTIVITY" GaugeColor="{DynamicResource DiskColor}" />
+                </StackPanel>
+                <TextBlock Classes="sub" HorizontalAlignment="Center" Text="{Binding IO}" />
+                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasTemp}">
+                  <c:TempBar Value="{Binding Temp}" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Classes="sub" Margin="10,0,0,0" Text="{Binding TempText}" />
+                </Grid>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

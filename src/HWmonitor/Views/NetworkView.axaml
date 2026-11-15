@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HWmonitor.ViewModels"
+             xmlns:s="using:HWmonitor.Services"
+             xmlns:c="using:HWmonitor.Controls"
+             x:Class="HWmonitor.Views.NetworkView"
+             x:DataType="vm:NetworkViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="28,4,28,28" Spacing="16">
+      <Border Classes="card" Padding="28">
+        <Grid ColumnDefinitions="Auto,*">
+          <StackPanel Spacing="16">
+            <c:Gauge Width="280" Height="280" Value="{Binding Live}" Maximum="{Binding Max}" Text="{Binding LiveText}"
+                     Label="Mbit/s" GaugeColor="{DynamicResource NetColor}" />
+            <Button Classes="primary" HorizontalAlignment="Center" Content="{Binding ButtonText}" Command="{Binding StartCommand}" />
+            <TextBlock Classes="sub" HorizontalAlignment="Center" Text="{Binding Phase}" />
+          </StackPanel>
+          <UniformGrid Grid.Column="1" Columns="2" Margin="32,0,0,0" VerticalAlignment="Center">
+            <Border Classes="tile" Margin="0,0,10,10" Padding="18">
+              <StackPanel><TextBlock Classes="caps" Text="DOWNLOAD" /><TextBlock Classes="big" Text="{Binding Down}" /><TextBlock Classes="sub" Text="Mbit/s" /></StackPanel>
+            </Border>
+            <Border Classes="tile" Margin="0,0,0,10" Padding="18">
+              <StackPanel><TextBlock Classes="caps" Text="UPLOAD" /><TextBlock Classes="big" Text="{Binding Up}" /><TextBlock Classes="sub" Text="Mbit/s" /></StackPanel>
+            </Border>
+            <Border Classes="tile" Margin="0,0,10,0" Padding="18">
+              <StackPanel><TextBlock Classes="caps" Text="PING" /><TextBlock Classes="big" Text="{Binding Ping}" /><TextBlock Classes="sub" Text="ms" /></StackPanel>
+            </Border>
+            <Border Classes="tile" Padding="18">
+              <StackPanel><TextBlock Classes="caps" Text="JITTER" /><TextBlock Classes="big" Text="{Binding Jitter}" /><TextBlock Classes="sub" Text="ms" /></StackPanel>
+            </Border>
+          </UniformGrid>
+        </Grid>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="h2" Text="Previous tests" />
+          <TextBlock Classes="sub" Text="No tests yet." IsVisible="{Binding !History.Count}" />
+          <ItemsControl ItemsSource="{Binding History}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="s:SpeedResult">
+                <Grid ColumnDefinitions="2*,*,*,*,*" Margin="0,6">
+                  <TextBlock Classes="sub" Text="{Binding Time, StringFormat='{}{0:ddd dd MMM yyyy · HH:mm}'}" />
+                  <TextBlock Grid.Column="1" Text="{Binding DownMbps, StringFormat='↓ {0:0.0} Mbit/s'}" />
+                  <TextBlock Grid.Column="2" Text="{Binding UpMbps, StringFormat='↑ {0:0.0} Mbit/s'}" />
+                  <TextBlock Grid.Column="3" Text="{Binding PingMs, StringFormat='{}{0:0} ms ping'}" />
+                  <TextBlock Grid.Column="4" Classes="sub" Text="{Binding JitterMs, StringFormat='{}{0:0.0} ms jitter'}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

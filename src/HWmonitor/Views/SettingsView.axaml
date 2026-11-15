@@ -1,0 +1,103 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HWmonitor.ViewModels"
+             x:Class="HWmonitor.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+  <UserControl.Styles>
+    <Style Selector="Grid.row"><Setter Property="Margin" Value="0,7" /></Style>
+    <Style Selector="ColorPicker"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+  </UserControl.Styles>
+  <ScrollViewer>
+    <StackPanel Margin="28,4,28,28" Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
+
+      <Border Classes="card">
+        <StackPanel>
+          <TextBlock Classes="h2" Text="Appearance" Margin="0,0,0,8" />
+          <Grid Classes="row" ColumnDefinitions="*,240">
+            <TextBlock Text="Theme" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme}" />
+          </Grid>
+          <Grid Classes="row" ColumnDefinitions="*,240">
+            <TextBlock Text="Accent colour" VerticalAlignment="Center" />
+            <ColorPicker Grid.Column="1" Color="{Binding Accent.Color}" />
+          </Grid>
+          <Grid Classes="row" ColumnDefinitions="*,240">
+            <TextBlock Text="Font" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Fonts}" SelectedItem="{Binding FontFamily}" MaxDropDownHeight="360" />
+          </Grid>
+          <Grid Classes="row" ColumnDefinitions="*,240">
+            <TextBlock VerticalAlignment="Center"><Run Text="Font size  " /><Run Text="{Binding FontSize}" Foreground="{DynamicResource SubTextBrush}" /></TextBlock>
+            <Slider Grid.Column="1" Minimum="11" Maximum="17" Value="{Binding FontSize}" TickFrequency="1" IsSnapToTickEnabled="True" />
+          </Grid>
+          <Grid Classes="row" ColumnDefinitions="*,240">
+            <TextBlock Text="Window opacity" VerticalAlignment="Center" />
+            <Slider Grid.Column="1" Minimum="0.6" Maximum="1" Value="{Binding WindowOpacity}" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel>
+          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+            <TextBlock Classes="h2" Text="Display colours" />
+            <Button Grid.Column="1" Classes="ghost" Content="Reset to defaults" Command="{Binding ResetColors}" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding GaugeColors}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ColorSetting">
+                <Grid Classes="row" ColumnDefinitions="*,240">
+                  <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Ellipse Width="12" Height="12" VerticalAlignment="Center">
+                      <Ellipse.Fill><SolidColorBrush Color="{Binding Color}" /></Ellipse.Fill>
+                    </Ellipse>
+                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                  </StackPanel>
+                  <ColorPicker Grid.Column="1" Color="{Binding Color}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel>
+          <TextBlock Classes="h2" Text="Performance &amp; behaviour" Margin="0,0,0,8" />
+          <Grid Classes="row" ColumnDefinitions="*,240">
+            <StackPanel>
+              <TextBlock Text="Sensor update interval (ms)" />
+              <TextBlock Classes="sub" Text="Longer intervals use less CPU. Polling slows down automatically while minimized." TextWrapping="Wrap" />
+            </StackPanel>
+            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" ItemsSource="{Binding Intervals}" SelectedItem="{Binding UpdateIntervalMs}" />
+          </Grid>
+          <Grid Classes="row" ColumnDefinitions="*,Auto">
+            <TextBlock Text="Track gaming sessions automatically" VerticalAlignment="Center" />
+            <ToggleSwitch Grid.Column="1" IsChecked="{Binding TrackGames}" OnContent="" OffContent="" />
+          </Grid>
+          <Grid Classes="row" ColumnDefinitions="*,Auto">
+            <TextBlock Text="Start with Windows (minimized)" VerticalAlignment="Center" />
+            <ToggleSwitch Grid.Column="1" IsChecked="{Binding StartWithWindows}" OnContent="" OffContent="" />
+          </Grid>
+          <StackPanel Classes="row" Spacing="4" Margin="0,7">
+            <TextBlock Text="Always treat as game (process names, comma separated)" />
+            <TextBox Text="{Binding ExtraGames}" PlaceholderText="e.g. minecraft, javaw" />
+          </StackPanel>
+          <StackPanel Spacing="4" Margin="0,7">
+            <TextBlock Text="Never treat as game" />
+            <TextBox Text="{Binding IgnoredProcesses}" PlaceholderText="e.g. vlc, photoshop" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel>
+            <TextBlock Classes="h3" Text="{Binding Version}" />
+            <TextBlock Classes="sub" Text="{Binding DataFolder}" />
+          </StackPanel>
+          <Button Grid.Column="1" Classes="ghost" Content="Open data folder" Command="{Binding OpenDataFolder}" VerticalAlignment="Center" />
+        </Grid>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

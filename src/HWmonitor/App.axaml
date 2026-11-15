@@ -1,0 +1,128 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:HWmonitor.Controls"
+             x:Class="HWmonitor.App"
+             RequestedThemeVariant="Dark">
+  <Application.Resources>
+    <StreamGeometry x:Key="IconChip">M17,17H7V7H17M21,11V9H19V7C19,5.89 18.1,5 17,5H15V3H13V5H11V3H9V5H7C5.89,5 5,5.89 5,7V9H3V11H5V13H3V15H5V17A2,2 0 0,0 7,19H9V21H11V19H13V21H15V19H17A2,2 0 0,0 19,17V15H21V13H19V11M13,13H11V11H13M15,9H9V15H15V9Z</StreamGeometry>
+    <StreamGeometry x:Key="IconWifi">M12,21L15.6,16.2C14.6,15.45 13.35,15 12,15C10.65,15 9.4,15.45 8.4,16.2L12,21M12,3C7.95,3 4.21,4.34 1.2,6.6L3,9C5.5,7.12 8.62,6 12,6C15.38,6 18.5,7.12 21,9L22.8,6.6C19.79,4.34 16.05,3 12,3M12,9C9.3,9 6.81,9.89 4.8,11.4L6.6,13.8C8.1,12.670 9.97,12 12,12C14.03,12 15.9,12.67 17.4,13.8L19.2,11.4C17.19,9.89 14.7,9 12,9Z</StreamGeometry>
+    <StreamGeometry x:Key="IconGamepad">M7.97,16L5,19C4.67,19.3 4.23,19.5 3.75,19.5A1.75,1.75 0 0,1 2,17.75V17.5L3,10.12C3.21,7.81 5.14,6 7.5,6H16.5C18.86,6 20.79,7.81 21,10.12L22,17.5V17.75A1.75,1.75 0 0,1 20.25,19.5C19.77,19.5 19.33,19.3 19,19L16.03,16H7.97M7,8V10H5V11H7V13H8V11H10V10H8V8H7M16.5,8A0.75,0.75 0 0,0 15.75,8.75A0.75,0.75 0 0,0 16.5,9.5A0.75,0.75 0 0,0 17.25,8.75A0.75,0.75 0 0,0 16.5,8M14.75,9.75A0.75,0.75 0 0,0 14,10.5A0.75,0.75 0 0,0 14.75,11.25A0.75,0.75 0 0,0 15.5,10.5A0.75,0.75 0 0,0 14.75,9.75M18.25,9.75A0.75,0.75 0 0,0 17.5,10.5A0.75,0.75 0 0,0 18.25,11.25A0.75,0.75 0 0,0 19,10.5A0.75,0.75 0 0,0 18.25,9.75M16.5,11.5A0.75,0.75 0 0,0 15.75,12.25A0.75,0.75 0 0,0 16.5,13A0.75,0.75 0 0,0 17.25,12.25A0.75,0.75 0 0,0 16.5,11.5Z</StreamGeometry>
+    <StreamGeometry x:Key="IconGear">M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.050 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.340 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z</StreamGeometry>
+  </Application.Resources>
+
+  <Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+
+    <!-- typography -->
+    <Style Selector="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    </Style>
+    <Style Selector="TextBlock.h1"><Setter Property="FontSize" Value="24" /><Setter Property="FontWeight" Value="Bold" /></Style>
+    <Style Selector="TextBlock.h2"><Setter Property="FontSize" Value="16" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.h3"><Setter Property="FontSize" Value="13" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.sub"><Setter Property="Foreground" Value="{DynamicResource SubTextBrush}" /><Setter Property="FontSize" Value="12" /></Style>
+    <Style Selector="TextBlock.caps">
+      <Setter Property="Foreground" Value="{DynamicResource SubTextBrush}" />
+      <Setter Property="FontSize" Value="11" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="LetterSpacing" Value="0.6" />
+    </Style>
+    <Style Selector="TextBlock.big"><Setter Property="FontSize" Value="30" /><Setter Property="FontWeight" Value="Bold" /></Style>
+
+    <!-- cards -->
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+      <Setter Property="CornerRadius" Value="16" />
+      <Setter Property="Padding" Value="18" />
+      <Setter Property="BorderBrush" Value="{DynamicResource HairlineBrush}" />
+      <Setter Property="BorderThickness" Value="0.5" />
+    </Style>
+    <Style Selector="Border.tile">
+      <Setter Property="Background" Value="{DynamicResource CardAltBrush}" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="10" />
+    </Style>
+    <Style Selector="Border.pill">
+      <Setter Property="CornerRadius" Value="999" />
+      <Setter Property="Padding" Value="10,4" />
+    </Style>
+
+    <!-- custom controls -->
+    <Style Selector="c|Gauge">
+      <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+      <Setter Property="SubForeground" Value="{DynamicResource SubTextBrush}" />
+      <Setter Property="TrackColor" Value="{DynamicResource TrackColor}" />
+    </Style>
+    <Style Selector="c|TempBar">
+      <Setter Property="CoolColor" Value="{DynamicResource TempCoolColor}" />
+      <Setter Property="HotColor" Value="{DynamicResource TempHotColor}" />
+      <Setter Property="TrackColor" Value="{DynamicResource TrackColor}" />
+    </Style>
+
+    <!-- traffic lights -->
+    <Style Selector="Button.traffic">
+      <Setter Property="Width" Value="13" /><Setter Property="Height" Value="13" />
+      <Setter Property="Padding" Value="0" /><Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}" CornerRadius="7" BorderBrush="#26000000" BorderThickness="0.5">
+            <TextBlock x:Name="glyph" Text="{TemplateBinding Tag}" FontSize="9" FontWeight="Bold" Foreground="#99000000"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" Margin="0,-1,0,0" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="StackPanel.lights:pointerover Button.traffic /template/ TextBlock#glyph">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="Button.close"><Setter Property="Background" Value="#FF5F57" /></Style>
+    <Style Selector="Button.min"><Setter Property="Background" Value="#FEBC2E" /></Style>
+    <Style Selector="Button.max"><Setter Property="Background" Value="#28C840" /></Style>
+
+    <!-- sidebar navigation -->
+    <Style Selector="Button.nav">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Padding" Value="10,8" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    </Style>
+    <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource HairlineBrush}" />
+    </Style>
+    <Style Selector="Button.nav.selected /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+    </Style>
+    <Style Selector="Button.nav.selected PathIcon">
+      <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+    </Style>
+    <Style Selector="Button.nav PathIcon">
+      <Setter Property="Width" Value="16" /><Setter Property="Height" Value="16" />
+      <Setter Property="Foreground" Value="{DynamicResource SubTextBrush}" />
+    </Style>
+
+    <!-- buttons -->
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="CornerRadius" Value="999" />
+      <Setter Property="Padding" Value="22,9" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="Opacity" Value="0.85" />
+    </Style>
+    <Style Selector="Button.ghost">
+      <Setter Property="Background" Value="{DynamicResource CardAltBrush}" />
+      <Setter Property="CornerRadius" Value="999" />
+      <Setter Property="Padding" Value="12,5" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style Selector="ScrollViewer">
+      <Setter Property="AllowAutoHide" Value="True" />
+    </Style>
+  </Application.Styles>
+</Application>

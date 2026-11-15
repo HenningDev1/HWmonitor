@@ -1,0 +1,90 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:HWmonitor.ViewModels"
+        xmlns:v="using:HWmonitor.Views"
+        x:Class="HWmonitor.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="HWmonitor" Icon="/Assets/icon.ico"
+        Width="1280" Height="840" MinWidth="960" MinHeight="620"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        FontFamily="{DynamicResource AppFont}"
+        FontSize="{DynamicResource AppFontSize}">
+  <Panel>
+    <Border x:Name="Root" CornerRadius="14" ClipToBounds="True"
+            Background="{DynamicResource WindowBrush}"
+            BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="1">
+      <Grid ColumnDefinitions="216,*">
+
+        <!-- ───────── Sidebar ───────── -->
+        <Border Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="0,0,1,0">
+          <DockPanel Margin="12,14,12,14">
+            <Panel DockPanel.Dock="Top" Height="24" Background="Transparent" PointerPressed="OnDragArea">
+              <StackPanel Classes="lights" Orientation="Horizontal" Spacing="8" Margin="6,0,0,0" VerticalAlignment="Center">
+                <Button Classes="traffic close" Tag="×" Click="OnClose" ToolTip.Tip="Close" />
+                <Button Classes="traffic min" Tag="−" Click="OnMinimize" ToolTip.Tip="Minimize" />
+                <Button Classes="traffic max" Tag="+" Click="OnFullscreen" ToolTip.Tip="Full screen" />
+              </StackPanel>
+            </Panel>
+
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="6,22,0,18">
+              <Image Source="/Assets/icon.png" Width="30" Height="30" />
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="HWmonitor" FontWeight="Bold" FontSize="15" />
+                <TextBlock Classes="sub" Text="System at a glance" FontSize="11" />
+              </StackPanel>
+            </StackPanel>
+
+            <!-- driver indicator -->
+            <Border DockPanel.Dock="Bottom" Classes="tile" IsVisible="{Binding Hardware.AnyDriverUpdate}" Cursor="Hand"
+                    PointerPressed="OnDriverClicked" ToolTip.Tip="Open the driver download page">
+              <StackPanel Spacing="2">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Ellipse Width="8" Height="8" Fill="#FF9F0A" VerticalAlignment="Center" />
+                  <TextBlock Text="Driver update" FontWeight="SemiBold" FontSize="12" />
+                </StackPanel>
+                <TextBlock Classes="sub" FontSize="11" TextWrapping="Wrap" Text="A newer graphics driver is likely available." />
+              </StackPanel>
+            </Border>
+
+            <StackPanel Spacing="2">
+              <TextBlock Classes="caps" Text="DASHBOARDS" Margin="10,0,0,6" />
+              <Button Classes="nav" Classes.selected="{Binding IsHardware}" Command="{Binding Navigate}" CommandParameter="0">
+                <StackPanel Orientation="Horizontal" Spacing="10"><PathIcon Data="{StaticResource IconChip}" /><TextBlock Text="Hardware" /></StackPanel>
+              </Button>
+              <Button Classes="nav" Classes.selected="{Binding IsNetwork}" Command="{Binding Navigate}" CommandParameter="1">
+                <StackPanel Orientation="Horizontal" Spacing="10"><PathIcon Data="{StaticResource IconWifi}" /><TextBlock Text="Network" /></StackPanel>
+              </Button>
+              <Button Classes="nav" Classes.selected="{Binding IsGaming}" Command="{Binding Navigate}" CommandParameter="2">
+                <StackPanel Orientation="Horizontal" Spacing="10"><PathIcon Data="{StaticResource IconGamepad}" /><TextBlock Text="Gaming" /></StackPanel>
+              </Button>
+              <TextBlock Classes="caps" Text="APP" Margin="10,14,0,6" />
+              <Button Classes="nav" Classes.selected="{Binding IsSettings}" Command="{Binding Navigate}" CommandParameter="3">
+                <StackPanel Orientation="Horizontal" Spacing="10"><PathIcon Data="{StaticResource IconGear}" /><TextBlock Text="Settings" /></StackPanel>
+              </Button>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
+        <!-- ───────── Content ───────── -->
+        <Grid Grid.Column="1" RowDefinitions="56,*">
+          <Panel Background="Transparent" PointerPressed="OnDragArea" DoubleTapped="OnTitleDoubleTapped">
+            <TextBlock Classes="h1" Text="{Binding PageTitle}" Margin="28,14,0,0" VerticalAlignment="Center" />
+          </Panel>
+          <Panel Grid.Row="1">
+            <Panel IsVisible="{Binding IsHardware}"><v:HardwareView DataContext="{Binding Hardware}" /></Panel>
+            <Panel IsVisible="{Binding IsNetwork}"><v:NetworkView DataContext="{Binding Network}" /></Panel>
+            <Panel IsVisible="{Binding IsGaming}"><v:GamingView DataContext="{Binding Gaming}" /></Panel>
+            <Panel IsVisible="{Binding IsSettings}"><v:SettingsView DataContext="{Binding Settings}" /></Panel>
+          </Panel>
+        </Grid>
+      </Grid>
+    </Border>
+
+    <!-- resize grip -->
+    <Border Width="16" Height="16" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="Transparent"
+            Cursor="BottomRightCorner" PointerPressed="OnResize" />
+  </Panel>
+</Window>
