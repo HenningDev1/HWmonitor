@@ -204,14 +204,15 @@ static class Installer
 
     static void Shortcut(string link, string target, string workDir)
     {
-        var t = Type.GetTypeFromProgID("WScript.Shell");
-        dynamic shell = Activator.CreateInstance(t);
-        dynamic lnk = shell.CreateShortcut(link);
-        lnk.TargetPath = target;
-        lnk.WorkingDirectory = workDir;
-        lnk.IconLocation = target + ",0";
-        lnk.Description = "HWmonitor – hardware monitor";
-        lnk.Save();
+        try { HWmonitorShared.ShellLink.Create(link, target, "HWmonitor - hardware monitor"); }
+        catch
+        {
+            // fall back to the per-user Start menu / desktop
+            string userDir = link.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), StringComparison.OrdinalIgnoreCase)
+                ? Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)
+                : Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+            HWmonitorShared.ShellLink.Create(Path.Combine(userDir, Path.GetFileName(link)), target, "HWmonitor - hardware monitor");
+        }
     }
 
     static void TryDelete(string f) { try { if (File.Exists(f)) File.Delete(f); } catch { } }

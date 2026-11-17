@@ -21,6 +21,7 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            Task.Run(EnsureStartMenuShortcut);
             var vm = new MainViewModel(_settings);
             var win = new MainWindow { DataContext = vm };
             if (desktop.Args?.Contains("--minimized") == true) win.WindowState = Avalonia.Controls.WindowState.Minimized;
@@ -28,5 +29,22 @@ public partial class App : Application
             desktop.ShutdownRequested += (_, _) => vm.Dispose();
         }
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>Self-repair: an installed copy always gets a Start-menu entry so Windows search finds it.</summary>
+    static void EnsureStartMenuShortcut()
+    {
+        try
+        {
+            var exe = Environment.ProcessPath;
+            var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            if (exe == null || !exe.StartsWith(pf, StringComparison.OrdinalIgnoreCase)) return; // portable copy: leave alone
+            var common = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms), "HWmonitor.lnk");
+            var user = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "HWmonitor.lnk");
+            if (File.Exists(common) || File.Exists(user)) return;
+            try { HWmonitorShared.ShellLink.Create(common, exe, "HWmonitor - hardware monitor"); }
+            catch { HWmonitorShared.ShellLink.Create(user, exe, "HWmonitor - hardware monitor"); }
+        }
+        catch { }
     }
 }
